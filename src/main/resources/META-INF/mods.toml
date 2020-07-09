@@ -1,0 +1,15 @@
+modLoader="javafml" #mandatory
+loaderVersion="[28,)" #mandatory (28 is current forge version)
+issueTrackerURL="http://my.issue.tracker/" #optional
+
+[[mods]] #mandatory
+modId="block_snorter" #mandatory
+version="${file.jarVersion}" #mandatory
+displayName="Block Snorter" #mandatory
+#updateJSONURL="http://myurl.me/" #optional
+#displayURL="http://example.com/" #optional
+logoFile="examplemod.png" #optional
+credits="Spectre0987"
+authors="50ap5ud5" #optional
+description='''
+Server Administration Audit Tool.'''
