@@ -1,9 +1,5 @@
 package me.soapsuds.block_snorter.events;
 
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-
 import me.soapsuds.block_snorter.BlockSnorter;
 import me.soapsuds.block_snorter.LConfig;
 import me.soapsuds.block_snorter.file.Writer;
@@ -23,29 +19,28 @@ import net.minecraftforge.fml.common.Mod;
  */
 @Mod.EventBusSubscriber(modid = BlockSnorter.MODID)
 public class Events {
-	private final static DateTimeFormatter dt_format = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
 
 	@SubscribeEvent
 	public static void logBlockBreak(BlockEvent.BreakEvent event) {
 		if (LConfig.CONFIG.logBlockBreak.get()) {
 			if (LConfig.CONFIG.filterBlockBreakTypes.get()) {
 				if (Helper.doesBlockBrokenMatchFilter(event.getState().getBlock())) {
-					Writer.write(event.getPlayer().getName().getFormattedText()
+					Writer.writeToLog(event.getPlayer().getName().getFormattedText()
 							+ " with UUID: " + event.getPlayer().getUniqueID()
 							+ " in dimension " + DimensionType.getKey(event.getPlayer().dimension)
 							+ " broke block " + event.getState()
 							+ " at " + event.getPos()
-							+ " on " + LocalDateTime.now().format(dt_format));
+							+ " on " + Helper.timeStampAtTimeZone());
 					return;
 				}
 			}
 			else {
-				Writer.write(event.getPlayer().getName().getFormattedText()
+				Writer.writeToLog(event.getPlayer().getName().getFormattedText()
 						+ " with UUID: " + event.getPlayer().getUniqueID()
 						+ " in dimension " + DimensionType.getKey(event.getPlayer().dimension)
 						+ " broke block " + event.getState()
 						+ " at " + event.getPos()
-						+ " on " + LocalDateTime.now().format(dt_format));
+						+ " on " + Helper.timeStampAtTimeZone());
 			}
 		}
 	}
@@ -58,21 +53,21 @@ public class Events {
 				ServerPlayerEntity player = (ServerPlayerEntity)event.getEntity();
 				if (LConfig.CONFIG.filterBlockPlaceTypes.get()) {
 					if (Helper.doesBlockPlacedMatchFilter(event.getState().getBlock())) {
-						Writer.write(player.getName().getFormattedText()
+						Writer.writeToLog(player.getName().getFormattedText()
 								+ " with UUID: " + player.getUniqueID()
 								+ " in dimension " + DimensionType.getKey(player.dimension)
 								+ " placed block " + event.getState()
 								+ " at " + event.getPos()
-								+ " on " + LocalDateTime.now().format(dt_format));
+								+ " on " + Helper.timeStampAtTimeZone());
 						return;
 					}
 				}
 				else {
-					Writer.write(player.getName().getFormattedText() + " with UUID: "
+					Writer.writeToLog(player.getName().getFormattedText() + " with UUID: "
 							+ player.getUniqueID() + " placed block " + event.getState()
 							+ " in dimension " + DimensionType.getKey(player.dimension)
 							+ " at " + event.getPos()
-							+ " on " + LocalDateTime.now().format(dt_format));
+							+ " on " + Helper.timeStampAtTimeZone());
 				}
 			}
 		}
@@ -87,85 +82,85 @@ public class Events {
 				BlockPos blockpos = event.getPos();
 				if (LConfig.CONFIG.filterByBlockUseTypes.get()) {
 					if (Helper.doesBlockInteractedMatchFilter(event.getWorld().getBlockState(blockpos).getBlock())) {
-						Writer.write(player.getName().getFormattedText() + " with UUID: "
+						Writer.writeToLog(player.getName().getFormattedText() + " with UUID: "
 								+ player.getUniqueID() + " used " + event.getItemStack().getItem()
 								+ " on " + event.getWorld().getBlockState(blockpos)
 								+ " at " + event.getPos()
 								+ " in  " + DimensionType.getKey(player.dimension)
-								+ " on " + LocalDateTime.now().format(dt_format));
+								+ " on " + Helper.timeStampAtTimeZone());
 						return;
 					}
 				}
 				else if (LConfig.CONFIG.filterByItemUseTypes.get()) {
 					if (Helper.doesItemUsedMatchFilter(event.getItemStack().getItem())) {
-						Writer.write(player.getName().getFormattedText() + " with UUID: "
+						Writer.writeToLog(player.getName().getFormattedText() + " with UUID: "
 								+ player.getUniqueID() + " used " + event.getItemStack().getItem()
 								+ " on " + event.getWorld().getBlockState(blockpos)
 								+ " at " + event.getPos()
 								+ " in  " + DimensionType.getKey(player.dimension)
-								+ " on " + LocalDateTime.now().format(dt_format));
+								+ " on " + Helper.timeStampAtTimeZone());
 						return;
 					}
 				}
 				else {
-					Writer.write(player.getName().getFormattedText() + " with UUID: "
+					Writer.writeToLog(player.getName().getFormattedText() + " with UUID: "
 							+ player.getUniqueID() + " used " + event.getItemStack().getItem()
 							+ " on " + event.getWorld().getBlockState(blockpos)
 							+ " at " + event.getPos()
 							+ " in  " + DimensionType.getKey(player.dimension)
-							+ " on " + LocalDateTime.now().format(dt_format));
+							+ " on " + Helper.timeStampAtTimeZone());
 				}
 			}
 		}
 	}
 
 	@SubscribeEvent
-	public static void logContainerOpen(PlayerContainerEvent.Open event) {
+	public static void logContainerOpen(PlayerContainerEvent.Open event) { //TODO: Get Container position rather than rely on raytrace look vector
 		if (LConfig.CONFIG.logContainerUse.get()) {
 			if(event.getEntity() instanceof ServerPlayerEntity) {
 				ServerPlayerEntity player = (ServerPlayerEntity)event.getPlayer();
 				if (LConfig.CONFIG.filterContainerTypes.get()) {
 					if (Helper.doesContainerTypeMatchFilter(event.getContainer().getType())) {
-						Writer.write(player.getName().getFormattedText() + " with UUID: " + player.getUniqueID()
+						Writer.writeToLog(player.getName().getFormattedText() + " with UUID: " + player.getUniqueID()
 						+ " opened container type " + event.getContainer().getType().getRegistryName()
 						+ " in dimension " + DimensionType.getKey(player.dimension)
 						+ " at " + Helper.getRTLookingAt(player,5).getHitVec()
-						+ " on " + LocalDateTime.now().format(dt_format));
+						+ " on " + Helper.timeStampAtTimeZone());
 						return;
 					}
 				}
 				else {
-					Writer.write(player.getName().getFormattedText() + " with UUID: " + player.getUniqueID()
+					Writer.writeToLog(player.getName().getFormattedText() + " with UUID: " + player.getUniqueID()
 					+ " opened container type " + event.getContainer().getType().getRegistryName()
 					+ " in dimension " + DimensionType.getKey(player.dimension)
 					+ " at " + Helper.getRTLookingAt(player,5).getHitVec()
-					+ " on " + LocalDateTime.now().format(dt_format));
+					+ " on " + Helper.timeStampAtTimeZone());
 				}
 			}
 		}
 	}
 
 	@SubscribeEvent
-	public static void logContainerClose(PlayerContainerEvent.Close event) {
+	public static void logContainerClose(PlayerContainerEvent.Close event) {//TODO: Get Container position rather than rely on raytrace look vector
 		if (LConfig.CONFIG.logContainerUse.get()) {
 			if(event.getEntity() instanceof ServerPlayerEntity) {
 				ServerPlayerEntity player = (ServerPlayerEntity)event.getPlayer();
 				if (LConfig.CONFIG.filterContainerTypes.get()) {
 					if (Helper.doesContainerTypeMatchFilter(event.getContainer().getType())) {
-						Writer.write(player.getName().getFormattedText() + " with UUID: " + player.getUniqueID()
+						Writer.writeToLog(player.getName().getFormattedText() + " with UUID: " + player.getUniqueID()
 						+ " closed container type " + event.getContainer().getType().getRegistryName()
 						+ " in dimension " + DimensionType.getKey(player.dimension)
 						+ " at " + Helper.getRTLookingAt(player,5).getHitVec()
-						+ " on " + LocalDateTime.now().format(dt_format));
+						+ " on " + Helper.timeStampAtTimeZone());
 						return;
 					}
 				}
 				else {
-					Writer.write(player.getName().getFormattedText() + " with UUID: " + player.getUniqueID()
+					Writer.writeToLog(player.getName().getFormattedText() + " with UUID: " + player.getUniqueID()
 					+ " closed container type " + event.getContainer().getType().getRegistryName()
 					+ " in dimension " + DimensionType.getKey(player.dimension)
 					+ " at " + Helper.getRTLookingAt(player,5).getHitVec()
-					+ " on " + LocalDateTime.now().format(dt_format));
+					+ " on " + Helper.timeStampAtTimeZone());
 				}
 			}
 		}
@@ -177,18 +172,18 @@ public class Events {
 			ServerPlayerEntity player = (ServerPlayerEntity)event.getPlayer();
 			if (LConfig.CONFIG.filterDimDestinationTypes.get()) {
 				if (Helper.doesDimensionDestinationMatchFilter(event.getTo())) {
-					Writer.write(player.getName().getFormattedText() + " with UUID: " + player.getUniqueID()
+					Writer.writeToLog(player.getName().getFormattedText() + " with UUID: " + player.getUniqueID()
 					+ " changed dimension from " + event.getFrom()
 					+ " to " + event.getTo()
-					+ " on " + LocalDateTime.now().format(dt_format));
+					+ " on " + Helper.timeStampAtTimeZone());
 					return;
 				}
 			}
 			else {
-				Writer.write(player.getName().getFormattedText() + " with UUID: " + player.getUniqueID()
+				Writer.writeToLog(player.getName().getFormattedText() + " with UUID: " + player.getUniqueID()
 				+ " changed dimension from " + event.getFrom()
 				+ " to " + event.getTo()
-				+ " on " + LocalDateTime.now().format(dt_format));
+				+ " on " + Helper.timeStampAtTimeZone());
 			}
 		}
 	}

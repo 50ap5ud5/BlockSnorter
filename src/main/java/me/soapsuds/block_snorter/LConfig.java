@@ -24,8 +24,10 @@ public class LConfig {
         CONFIG = specPair.getLeft();
         CONFIG_SPEC = specPair.getRight();
     }
-    public ConfigValue<String> folderDirectory;
+    public ConfigValue<String> subFolderDirectory;
     public ConfigValue<String> fileName;
+    public ConfigValue<String> dateTimeFormat;
+    public ConfigValue<String> timeZoneId;
 
     public ForgeConfigSpec.BooleanValue logBlockBreak;
     public ForgeConfigSpec.BooleanValue filterBlockBreakTypes;
@@ -54,8 +56,10 @@ public class LConfig {
     public LConfig(ForgeConfigSpec.Builder builder) {
 
       builder.push("Log File Configurations");
-      folderDirectory = builder.translation("config.block_snorter.folder_path").comment("Defines folder path for log files to be created in", "Generates this folder under Minecraft Server install folder").define("folderDirectory", "auditing/block_logs", String.class::isInstance);
+      subFolderDirectory = builder.translation("config.block_snorter.folder_path").comment("Defines subfolder path for log files to be created in", "Generates this subfolder under Minecraft Server install folder").define("subFolderDirectory", "auditing/block_logs", String.class::isInstance);
       fileName = builder.translation("config.block_snorter.file_name").comment("Defines file name for log files.", "A creation date timestamp will be appended to this name").define("fileName", "log", String.class::isInstance);
+      dateTimeFormat = builder.translation("config.block_snorter.date_time_format").comment("Defines Date-Time Format for Timestamps used in log file name and entries").define("dateTimeFormat", "dd-MM-yyyy_HH-mm-ss", String.class::isInstance);
+      timeZoneId = builder.translation("config.block_snorter.time_zone_id").comment("Defines Timezone Offset for log files.","List of Valid Ids are in the block_snorter-timezones.txt file located in your config folder").define("timeZoneId", "GMT", String.class::isInstance);
       builder.pop();
 
       builder.push("Block Audit"); //Block Log Start
