@@ -13,7 +13,7 @@ apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
 version = "${mod_version}"
-group = 'net.block_snorter.mod' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+group = 'me.soapsuds' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "${project.jar_name}-${minecraft_version}"
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
@@ -22,10 +22,6 @@ minecraft {
     mappings channel: 'stable', version: "${mappings_version}"
     // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 
-    // accessTransformer = file('build/resources/main/META-INF/accesstransformer.cfg')
-
-    // Default run configurations.
-    // These can be tweaked, removed, or duplicated as needed.
     runs {
         client {
             workingDirectory project.file('run')
@@ -70,10 +66,12 @@ minecraft {
 
 repositories{
   mavenCentral()
+  maven { url 'https://jitpack.io' }
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${forge_version}"
+    //compile fg.deobf('com.gitlab.Spectre0987:TardisMod-1-14:master-SNAPSHOT')//Test Mod to log modded objects
 }
 
 // Example for how to get properties into the manifest for reading by the runtime..
@@ -82,7 +80,7 @@ jar {
         attributes([
             "Specification-Title": "block_snortermod",
             "Specification-Vendor": "block_snorter_mod",
-            "Specification-Version": "1", // We are version 1 of ourselves
+            "Specification-Version": "1",
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
             "Implementation-Vendor" :"block_snorter_mod",

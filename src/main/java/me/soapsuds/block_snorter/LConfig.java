@@ -24,8 +24,10 @@ public class LConfig {
         CONFIG = specPair.getLeft();
         CONFIG_SPEC = specPair.getRight();
     }
-    public ConfigValue<String> subFolderDirectory;
+
+    public ConfigValue<String> logFolderDirectory;
     public ConfigValue<String> fileName;
+    public ConfigValue<String> fileExtensionType;
     public ConfigValue<String> dateTimeFormat;
     public ConfigValue<String> timeZoneId;
 
@@ -50,14 +52,16 @@ public class LConfig {
     public ForgeConfigSpec.ConfigValue<List<? extends String>> dimChangeDestinationTypes;
 
     public ForgeConfigSpec.BooleanValue logContainerUse;
+    public ForgeConfigSpec.BooleanValue logContainerClose;
     public ForgeConfigSpec.BooleanValue filterContainerTypes;
     public ForgeConfigSpec.ConfigValue<List<? extends String>> containerTypes;
 
     public LConfig(ForgeConfigSpec.Builder builder) {
 
       builder.push("Log File Configurations");
-      subFolderDirectory = builder.translation("config.block_snorter.folder_path").comment("Defines subfolder path for log files to be created in", "Generates this subfolder under Minecraft Server install folder").define("subFolderDirectory", "auditing/block_logs", String.class::isInstance);
+      logFolderDirectory = builder.translation("config.block_snorter.folder_path").comment("Defines folder path for where log files to be created in", "By default, generates in server root folder","'.' means root folder of your server install folder", "The path MUST NOT end in /").define("logFolderDirectory", "./block_snorter/block_logs", String.class::isInstance);
       fileName = builder.translation("config.block_snorter.file_name").comment("Defines file name for log files.", "A creation date timestamp will be appended to this name").define("fileName", "log", String.class::isInstance);
+      fileExtensionType = builder.translation("config.block_snorter.file_ext_type").comment("Defines file extension type for log file", "Enter in one of the following: TXT or CSV","TXT = write to text file", "CSV = write to CSV file").define("fileExtensionType", "CSV", String.class::isInstance);
       dateTimeFormat = builder.translation("config.block_snorter.date_time_format").comment("Defines Date-Time Format for Timestamps used in log file name and entries").define("dateTimeFormat", "dd-MM-yyyy_HH-mm-ss", String.class::isInstance);
       timeZoneId = builder.translation("config.block_snorter.time_zone_id").comment("Defines Timezone Offset for log files.","List of Valid Ids are in the block_snorter-timezones.txt file located in your config folder").define("timeZoneId", "GMT", String.class::isInstance);
       builder.pop();
@@ -80,8 +84,8 @@ public class LConfig {
            .defineList("blockPlaceTypes", Lists.newArrayList("minecraft:tnt", "minecraft:command_block","minecraft:bedrock","minecraft:chain_command_block", "minecraft:repeating_command_block"), String.class::isInstance);
       builder.pop();
 
-      builder.push("Item Use on Block");
-      logItemUseOnBlock = builder.translation("config.block_snorter.block.item_use").comment("Toggles whether to log item used on blocks").define("logItemUseOnBlock", true);
+      builder.push("Item Right Click On Block");
+      logItemUseOnBlock = builder.translation("config.block_snorter.block.item_use").comment("Toggles whether to log the type of item used when right clicking on blocks","Use Cases: Water Bucket/Lava Bucket Griefing").define("logItemUseOnBlock", false);
       filterByItemUseTypes = builder.translation("config.block_snorter.item_use.filter_item").comment("Toggles filter of item use logs by item used").define("filterByItemUseTypes", false);
       filterByBlockUseTypes = builder.translation("config.block_snorter.item_use.filter_block").comment("Toggles whether to filter by type of block the item is used on").define("filterByBlockUseTypes", false);
       blockInteractTypes = builder.translation("config.block_snorter.blockInteractTypes")
@@ -95,7 +99,7 @@ public class LConfig {
       builder.pop(); //Block Log End
 
       builder.push("Dimension Audit");
-      logBlockDimChange = builder.translation("config.block_snorter.dim_change").comment("Toggles whether to log player dimension change events").define("logBlockDimChange", true);
+      logBlockDimChange = builder.translation("config.block_snorter.dim_change").comment("Toggles whether to log players changing from one dimension to another").define("logBlockDimChange", true);
       filterDimDestinationTypes = builder.translation("config.block_snorter.dim.filter").comment("Toggles filtering of dimension change logs by destination dimension type").define("filterDimDestinationTypes", false);
       dimChangeDestinationTypes = builder.translation("config.block_snorter.dimChangeDestinationTypes")
            .comment("List of dimensions to listen for when entity travels to this dimension")
@@ -103,7 +107,8 @@ public class LConfig {
         builder.pop();
 
       builder.push("Container Audit");
-      logContainerUse = builder.translation("config.block_snorter.container.use").comment("Toggle whether to log container opening").define("logContainerOpen", true);
+      logContainerUse = builder.translation("config.block_snorter.container.use").comment("Toggle whether to log container opening").define("logContainerUse", true);
+      logContainerClose = builder.translation("config.block_snorter.container.close").comment("Toggle whether to log container closing").define("logContainerClose", false);
       filterContainerTypes = builder.translation("config.block_snorter.container.filter").comment("Toggles filtering of container use logging by container type").define("filterContainerTypes", false);
       containerTypes = builder.translation("config.block_snorter.containerTypes")
            .comment("List of container types that the audit should track when they are opened","These are NOT the namespace id of blocks")

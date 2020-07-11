@@ -11,6 +11,8 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import me.soapsuds.block_snorter.LConfig;
+import me.soapsuds.block_snorter.constants.Constants.LogType;
+import me.soapsuds.block_snorter.constants.Constants.WriteType;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.inventory.container.ContainerType;
@@ -43,7 +45,7 @@ public class Helper {
       long epochSeconds = instant.atZone(ZoneId.of(timeZoneId)).toEpochSecond(); //convert to epochSeconds (UTC)
       DateTimeFormatter format = DateTimeFormatter.ofPattern(dateTimeFormat); //Prepare Formatter
       ZonedDateTime zonedDateTime = LocalDateTime.ofEpochSecond(epochSeconds, 0,
-                                OffsetDateTime.now(ZoneId.of(timeZoneId)).getOffset()).atZone(ZoneId.of(timeZoneId));
+                                OffsetDateTime.now(ZoneId.of(timeZoneId)).getOffset()).atZone(ZoneId.of(timeZoneId)); //Transform epochseconds to user defined timezone
        return zonedDateTime.format(format) + "-" + timeZoneId;
    }
 
@@ -52,9 +54,9 @@ public class Helper {
     * @return
     */
    public static String timeStampAtTimeZone() {
-	    String dt_format = LConfig.CONFIG.dateTimeFormat.get();
-	    String timeZone = LConfig.CONFIG.timeZoneId.get();
-	    return Helper.timeStampAtTimeZone(dt_format, timeZone);
+        String dt_format = LConfig.CONFIG.dateTimeFormat.get();
+        String timeZone = LConfig.CONFIG.timeZoneId.get();
+        return Helper.timeStampAtTimeZone(dt_format, timeZone);
 	}
 
    /**
@@ -167,6 +169,107 @@ public class Helper {
           }
       }
       return null;
+   }
+   /**
+    * Helper method to construct a log entry based on multiple parameter.
+    * @param entity
+    * @param logType
+    * @param auditObjectName
+    * @param currentDimension
+    * @param posX
+    * @param posY
+    * @param posZ
+    * @param timeStamp
+    * @param type
+    * @return
+    */
+   public static String constructEntry(String timeStamp, Entity entity, LogType logType, String auditObjectName, DimensionType currentDimension, String posX, String posY, String posZ, WriteType type) {
+	   String logEntry = "";
+	   String delimiter = "";
+	   String entityName = entity.getDisplayName().getString();
+	   String dimName = currentDimension.getRegistryName().toString();
+	   String[] entries = new String[]{timeStamp, entityName, entity.getUniqueID().toString(), logType.name(), auditObjectName, dimName, posX, posY, posZ};
+	   switch(type) {
+           case TXT:
+              delimiter = " ";
+              logEntry = String.join(delimiter, entries);
+              break;
+           case CSV:
+              delimiter = ",";
+              logEntry = String.join(delimiter, entries);
+              break;
+           default:
+              delimiter = " ";
+              logEntry = String.join(delimiter, entries);
+              break;
+       }
+       return logEntry;
+   }
+   /**
+    * Helper method to construct a log entry based on multiple parameter. Overloads construct Entry to allow for auditing of 2 objects
+    * @param entity
+    * @param logType
+    * @param auditObjectName
+    * @param auditObject2
+    * @param currentDimension
+    * @param posX
+    * @param posY
+    * @param posZ
+    * @param timeStamp
+    * @param type
+    * @return
+    */
+   public static String constructEntry2(String timeStamp, Entity entity, LogType logType, String auditObject, String auditObject2, DimensionType currentDimension, String posX, String posY, String posZ, WriteType type) {
+	   String logEntry = "";
+	   String delimiter = "";
+	   String entityName = entity.getDisplayName().getString();
+	   String dimName = currentDimension == null ? "N_A" : currentDimension.getRegistryName().toString();
+	   String[] entries = new String[]{timeStamp, entityName, entity.getUniqueID().toString(), logType.name(), auditObject, auditObject2.isEmpty() ? "N_A" : auditObject2, dimName, posX, posY, posZ};
+	   switch(type) {
+           case TXT:
+              delimiter = " ";
+              logEntry = String.join(delimiter, entries);
+              break;
+           case CSV:
+              delimiter = ",";
+              logEntry = String.join(delimiter, entries);
+              break;
+           default:
+              delimiter = " ";
+              logEntry = String.join(delimiter, entries);
+              break;
+       }
+       return logEntry;
+   }
+
+   public static String genHeaders(WriteType type) {
+	   String logEntry = "";
+	   String delimiter = "";
+	   String[] entries = new String[]{"Timestamp","EntityName", "EntityUUID", "ActionType", "USING/FROM", "ON/TO", "ObjectCurrentDimension", "posX", "posY", "posZ"};
+	   switch(type) {
+       case TXT:
+          delimiter = " ";
+          logEntry = String.join(delimiter, entries);
+          break;
+       case CSV:
+           delimiter = ",";
+           logEntry = String.join(delimiter, entries);
+           break;
+       default:
+           delimiter = " ";
+           logEntry = String.join(delimiter, entries);
+           break;
+	   }
+	   return logEntry;
+   }
+
+   public static String escapeSpecialCharacters(String data) {
+       String escapedData = data.replaceAll("\\R", " ");
+       if (data.contains(",") || data.contains("\"") || data.contains("'")) {
+           data = data.replace("\"", "\"\"");
+           escapedData = "\"" + data + "\"";
+       }
+       return escapedData;
    }
 
 }
