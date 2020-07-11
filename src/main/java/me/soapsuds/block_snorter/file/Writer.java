@@ -98,7 +98,7 @@ public class Writer {
       catch(SecurityException e) {
          e.printStackTrace();
       }
-      LOG_FILE = new File(LOG_FOLDER_DIR + "\\" + LConfig.CONFIG.fileName.get() + "-" + Helper.timeStampAtTimeZone() + "." + type.name().toLowerCase());
+      LOG_FILE = new File(LOG_FOLDER_DIR + "//" + LConfig.CONFIG.fileName.get() + "-" + Helper.timeStampAtTimeZone() + "." + type.name().toLowerCase());
       try {
           if(!LOG_FILE.exists()) {
               LOG_FILE.createNewFile();
