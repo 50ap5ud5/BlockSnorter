@@ -67,11 +67,14 @@ minecraft {
 repositories{
   mavenCentral()
   maven { url 'https://jitpack.io' }
+  maven { url 'https://squiddev.cc/maven/' }
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${forge_version}"
-    //compile fg.deobf('com.gitlab.Spectre0987:TardisMod-1-14:master-SNAPSHOT')//Test Mod to log modded objects
+    //implementation fg.deobf("com.gitlab.Spectre0987:TardisMod-1-14:${tm_tag}") //Use stable version of Tardis Mod
+    //implementation fg.deobf('com.gitlab.Spectre0987:TardisMod-1-14:master-SNAPSHOT')//Test Mod to log modded objects
+    //implementation fg.deobf("org.squiddev:cc-tweaked-${minecraft_version}:${cct_version}") //Test Mod for testing custom mod containers
 }
 
 // Example for how to get properties into the manifest for reading by the runtime..

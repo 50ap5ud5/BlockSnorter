@@ -10,6 +10,7 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.event.entity.player.PlayerContainerEvent;
@@ -95,63 +96,98 @@ public class Events {
 	}
 
 	@SubscribeEvent
-	public static void logContainerOpen(PlayerContainerEvent.Open event) { //TODO: Get Container position rather than rely on raytrace look vector
+	public static void logContainerOpen(PlayerContainerEvent.Open event) {
 		if (LConfig.CONFIG.logContainerUse.get()) {
-			if (!event.getEntity().getEntityWorld().isRemote()) {
+			if (!event.getEntity().getEntityWorld().isRemote() && event.getContainer() != null) {
 				RayTraceResult rt = Helper.getRTLookingAt(event.getEntity(),10);
 				Vec3d vec = rt.getHitVec();
-				String x = Double.toString(vec.getX()); //Get hit vec values, use these as a fall back 
+				String x = Double.toString(vec.getX()); //Get hit vec values, use these as a fall back
 				String y = Double.toString(vec.getY());
 				String z = Double.toString(vec.getZ());
-				String tileType = "";
-				String dir = "";
+				String tileOrEntityType = "";
+				String directionOrName = "";
 				if (rt instanceof BlockRayTraceResult) {
 					BlockRayTraceResult brt = (BlockRayTraceResult)rt;
 					x = Integer.toString(brt.getPos().getX()); //Get exact block pos, for pretty printing
 					y = Integer.toString(brt.getPos().getY());
 					z = Integer.toString(brt.getPos().getZ());
-					dir = event.getEntity().getHorizontalFacing().getOpposite().toString();
+					directionOrName = event.getEntity().getHorizontalFacing().getOpposite().toString();
 					TileEntity tile = event.getEntity().world.getTileEntity(brt.getPos());
 					if (tile != null)
-						tileType = tile.getType().getRegistryName().toString(); //Get the actual tile entity name, because container types cannot be read easily
-					else tileType = event.getContainer().getType().getRegistryName().toString(); //Fallback value if we can't get it
+					     tileOrEntityType = tile.getType().getRegistryName().toString(); //Get the actual tile entity name, because container types cannot be read easily
+					else if (tile == null && event.getContainer().getType() != null)//Handle when the block isn't a TE for some reason?
+					     tileOrEntityType = event.getContainer().getType().getRegistryName().toString(); //Fallback value if we can't get TE
+					else tileOrEntityType = event.getContainer().getClass().toString(); //Get container for cases when the type is null
+				}
+				if (rt instanceof EntityRayTraceResult) {//Handle Entities that have a container
+					EntityRayTraceResult ert = (EntityRayTraceResult)rt;
+					x = Integer.toString(ert.getEntity().getPosition().getX()); //Get exact entity pos, for pretty printing
+					y = Integer.toString(ert.getEntity().getPosition().getY());
+					z = Integer.toString(ert.getEntity().getPosition().getZ());
+					if (ert.getEntity().getType() != null && event.getContainer().getType() != null) {
+					    tileOrEntityType = ert.getEntity().getType().getRegistryName().toString();
+					    directionOrName = ert.getEntity().getDisplayName().getString(); //Get entity name to handle cases where players have named their entity containers
+					}
+					else {
+					    tileOrEntityType = event.getEntity().getEntityString(); //Handle cases where entity type is null
+					}
 				}
 			    if (LConfig.CONFIG.filterContainerTypes.get()) {
 				    if (Helper.doesContainerTypeMatchFilter(event.getContainer().getType())) {
-					    Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.CONTAINER_OPEN, tileType, dir, event.getEntity().dimension, x, y, z, Writer.type));
+					    Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.CONTAINER_OPEN, tileOrEntityType, directionOrName, event.getEntity().dimension, x, y, z, Writer.type));
 				    }
 			    }
 			    else {
-			    	Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.CONTAINER_OPEN, tileType, dir, event.getEntity().dimension, x, y, z, Writer.type));
+			        Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.CONTAINER_OPEN, tileOrEntityType, directionOrName, event.getEntity().dimension, x, y, z, Writer.type));
 			    }
 		    }
 		}
 	}
 
 	@SubscribeEvent
-	public static void logContainerClose(PlayerContainerEvent.Close event) {//TODO: Get Container position rather than rely on raytrace look vector
+	public static void logContainerClose(PlayerContainerEvent.Close event) {
 		if (LConfig.CONFIG.logContainerUse.get() && LConfig.CONFIG.logContainerClose.get()) {
-			if (!event.getEntity().getEntityWorld().isRemote()) {
-				if (event.getEntity() instanceof ServerPlayerEntity) {
-				    RayTraceResult rt = Helper.getRTLookingAt(event.getEntity(),10);
-				    Vec3d vec = Helper.getRTLookingAt(event.getPlayer(),10).getHitVec();
-				    String x = Double.toString(vec.getX());
-				    String y = Double.toString(vec.getY());
-				    String z = Double.toString(vec.getZ());
-				    String dir = "";
-				    String tileType = "";
-				    if (rt instanceof BlockRayTraceResult) {
-					    BlockRayTraceResult brt = (BlockRayTraceResult)rt;
-					    x = Integer.toString(brt.getPos().getX()); //Get exact block pos, for pretty printing
-					    y = Integer.toString(brt.getPos().getY());
-					    z = Integer.toString(brt.getPos().getZ());
-					    dir = event.getEntity().getHorizontalFacing().getOpposite().toString();
-					    TileEntity tile = event.getEntity().world.getTileEntity(brt.getPos());
-						if (tile != null)
-							tileType = tile.getType().getRegistryName().toString(); //Get the actual tile entity name, because container types cannot be read easily
-						else tileType = event.getContainer().toString(); //Fallback value if we can't get it
+			if (!event.getEntity().getEntityWorld().isRemote() && event.getContainer() != null) {
+				RayTraceResult rt = Helper.getRTLookingAt(event.getEntity(),10);
+				Vec3d vec = rt.getHitVec();
+				String x = Double.toString(vec.getX()); //Get hit vec values, use these as a fall back
+				String y = Double.toString(vec.getY());
+				String z = Double.toString(vec.getZ());
+				String tileOrEntityType = "";
+				String directionOrName = "";
+				if (rt instanceof BlockRayTraceResult) {
+					BlockRayTraceResult brt = (BlockRayTraceResult)rt;
+					x = Integer.toString(brt.getPos().getX()); //Get exact block pos, for pretty printing
+					y = Integer.toString(brt.getPos().getY());
+					z = Integer.toString(brt.getPos().getZ());
+					directionOrName = event.getEntity().getHorizontalFacing().getOpposite().toString();
+					TileEntity tile = event.getEntity().world.getTileEntity(brt.getPos());
+					if (tile != null)
+					     tileOrEntityType = tile.getType().getRegistryName().toString(); //Get the actual tile entity name, because container types cannot be read easily
+					else if (tile == null && event.getContainer().getType() != null)//Handle when the block isn't a TE for some reason?
+					     tileOrEntityType = event.getContainer().getType().getRegistryName().toString(); //Fallback value if we can't get TE
+					else tileOrEntityType = event.getContainer().getClass().toString(); //Get container for cases when the type is null
+				}
+				if (rt instanceof EntityRayTraceResult) {//Handle Entities that have a container
+					EntityRayTraceResult ert = (EntityRayTraceResult)rt;
+					x = Integer.toString(ert.getEntity().getPosition().getX()); //Get exact entity pos, for pretty printing
+					y = Integer.toString(ert.getEntity().getPosition().getY());
+					z = Integer.toString(ert.getEntity().getPosition().getZ());
+					if (ert.getEntity().getType() != null && event.getContainer().getType() != null) {
+					    tileOrEntityType = ert.getEntity().getType().getRegistryName().toString();
+					    directionOrName = ert.getEntity().getDisplayName().getString(); //Get entity name to handle cases where players have named their entity containers
+					}
+					else {
+					    tileOrEntityType = event.getEntity().getEntityString(); //Handle cases where entity type is null
+					}
+				}
+			    if (LConfig.CONFIG.filterContainerTypes.get()) {
+				    if (Helper.doesContainerTypeMatchFilter(event.getContainer().getType())) {
+					    Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.CONTAINER_OPEN, tileOrEntityType, directionOrName, event.getEntity().dimension, x, y, z, Writer.type));
 				    }
-				    Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.CONTAINER_CLOSE, tileType, dir, event.getEntity().dimension, x, y, z, Writer.type));
+			    }
+			    else {
+			        Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.CONTAINER_OPEN, tileOrEntityType, directionOrName, event.getEntity().dimension, x, y, z, Writer.type));
 			    }
 		    }
 		}
