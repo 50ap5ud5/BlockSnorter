@@ -47,7 +47,7 @@ public class LConfig {
     public ForgeConfigSpec.BooleanValue filterBlockInteractTypes;
     public ForgeConfigSpec.ConfigValue<List<? extends String>> blockInteractTypes;
 
-    public ForgeConfigSpec.BooleanValue logBlockDimChange;
+    public ForgeConfigSpec.BooleanValue logDimChange;
     public ForgeConfigSpec.BooleanValue filterDimDestinationTypes;
     public ForgeConfigSpec.BooleanValue filterDimDestinations;
     public ForgeConfigSpec.ConfigValue<List<? extends String>> dimChangeDestinationTypes;
@@ -101,7 +101,7 @@ public class LConfig {
       builder.pop(); //Block Log End
 
       builder.push("Dimension Audit");
-      logBlockDimChange = builder.translation("config.block_snorter.dim_change").comment("Toggles whether to log players changing from one dimension to another").define("logBlockDimChange", true);
+      logDimChange = builder.translation("config.block_snorter.dim_change").comment("Toggles whether to log players changing from one dimension to another").define("logDimChange", true);
       filterDimDestinations = builder.translation("config.block_snorter.dim.filter").comment("Toggles filtering of dimension change logs by destination dimension.").define("filterDimDestinations", false);
       dimChangeDestinations = builder.translation("config.block_snorter.dimChangeDestinations")
            .comment("List of dimensions to listen for when entity travels to this dimension type")

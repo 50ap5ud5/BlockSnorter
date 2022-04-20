@@ -7,9 +7,9 @@ package me.soapsuds.block_snorter.constants;
 public class Constants {
     
     public enum WriteType {
-    TXT,CSV
+        TXT,CSV
     }
     public enum LogType{
-    BLOCK_BREAK, BLOCK_PLACE, ITEM_RIGHT_CLICK, DIM_CHANGE, CONTAINER_OPEN, CONTAINER_CLOSE
+        BLOCK_BREAK, BLOCK_PLACE, ITEM_RIGHT_CLICK, DIM_CHANGE, CONTAINER_OPEN, CONTAINER_CLOSE
     }
 }

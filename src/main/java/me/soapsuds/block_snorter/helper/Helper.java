@@ -76,9 +76,13 @@ public class Helper {
 
       String result = "";
       if (hours > 0) {
-         result = String.format("(GMT+%d:%02d) %s", hours, minutes, tz.getID());
-      } else {
-         result = String.format("(GMT%d:%02d) %s", hours, minutes, tz.getID());
+         result = String.format("(GMT+%d) %s", hours, tz.getID());
+      } 
+      if (hours == 0) {
+    	  result = String.format("(GMT) %s", tz.getID());
+      }
+      else if (hours < 0){
+         result = String.format("(GMT%d) %s", hours, tz.getID());
       }
       return result;
    }

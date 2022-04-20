@@ -33,7 +33,7 @@ import net.minecraftforge.fml.common.Mod;
 public class Events {
 
 	@SubscribeEvent
-	public static void logBlockBreak(BlockEvent.BreakEvent event) {
+    public static void logBlockBreak(BlockEvent.BreakEvent event) {
 		if (LConfig.CONFIG.logBlockBreak.get()) {
 			BlockPos blockpos = event.getPos();
 			Block block = event.getState().getBlock();
@@ -233,18 +233,23 @@ public class Events {
 			String x = Integer.toString(pos.getX());
 			String y = Integer.toString(pos.getY());
 			String z = Integer.toString(pos.getZ());
-			if (LConfig.CONFIG.filterDimDestinations.get()) {
-				if (Helper.doesDimensionDestinationMatchFilter(event.getTo())) {
-					Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), player, LogType.DIM_CHANGE, event.getFrom().location().toString(), event.getTo().location().toString(), null, x, y, z, Writer.type));
-				}
-			}
-			if (LConfig.CONFIG.filterDimDestinationTypes.get()) {
-				DimensionType typeToWorld = player.getServer().getLevel(event.getTo()).dimensionType();
-				Optional<RegistryKey<DimensionType>> typeKey = player.getServer().registryAccess().registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY).getResourceKey(typeToWorld);
-				if (typeKey.isPresent()) {
-					if (Helper.doesDimensionDestinationTypeMatchFilter(typeKey.get())) {
+			if (LConfig.CONFIG.logDimChange.get()) {
+				if (LConfig.CONFIG.filterDimDestinations.get()) {
+					if (Helper.doesDimensionDestinationMatchFilter(event.getTo())) {
 						Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), player, LogType.DIM_CHANGE, event.getFrom().location().toString(), event.getTo().location().toString(), null, x, y, z, Writer.type));
 					}
+				}
+				if (LConfig.CONFIG.filterDimDestinationTypes.get()) {
+					DimensionType typeToWorld = player.getServer().getLevel(event.getTo()).dimensionType();
+					Optional<RegistryKey<DimensionType>> typeKey = player.getServer().registryAccess().registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY).getResourceKey(typeToWorld);
+					if (typeKey.isPresent()) {
+						if (Helper.doesDimensionDestinationTypeMatchFilter(typeKey.get())) {
+							Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), player, LogType.DIM_CHANGE, event.getFrom().location().toString(), event.getTo().location().toString(), null, x, y, z, Writer.type));
+						}
+					}
+				}
+				else {
+					Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), player, LogType.DIM_CHANGE, event.getFrom().location().toString(), event.getTo().location().toString(), null, x, y, z, Writer.type)); 
 				}
 			}
 		}
