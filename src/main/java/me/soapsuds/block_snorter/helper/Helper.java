@@ -18,14 +18,16 @@ import net.minecraft.entity.Entity;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.Item;
 import net.minecraft.util.Direction;
+import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.shapes.VoxelShapes;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.DimensionType;
+import net.minecraft.world.World;
 
 /**
  * Created by 50ap5ud5
@@ -130,9 +132,14 @@ public class Helper {
     * @param type
     * @return
     */
-   public static boolean doesDimensionDestinationMatchFilter(DimensionType type) {
+   public static boolean doesDimensionDestinationMatchFilter(RegistryKey<World> world) {
+      return LConfig.CONFIG.dimChangeDestinations.get().stream().anyMatch(name ->
+      world.location().toString().contentEquals(name));
+   }
+   
+   public static boolean doesDimensionDestinationTypeMatchFilter(RegistryKey<DimensionType> world) {
       return LConfig.CONFIG.dimChangeDestinationTypes.get().stream().anyMatch(name ->
-      type.getRegistryName().toString().contentEquals(name));
+      world.location().toString().contentEquals(name));
    }
 
    /**
@@ -153,17 +160,18 @@ public class Helper {
     * @return
     */
    public static RayTraceResult getRTLookingAt(Entity entity, double distance) {
-      Vec3d lookVec = entity.getLookVec();
+      Vector3d lookVec = entity.getLookAngle();
       for (int i = 0; i < distance * 2; i++) {
           float scale = i / 2F;
-          Vec3d pos = entity.getPositionVector().add(0, entity.getEyeHeight(), 0).add(lookVec.scale(scale));
-          if (entity.world.getBlockState(new BlockPos(pos)).getCollisionShape(entity.world, new BlockPos(pos)) != VoxelShapes.empty()
-               && !entity.world.isAirBlock(new BlockPos(pos))) {
-              return new BlockRayTraceResult(pos, Direction.getFacingFromVector(pos.x, pos.y, pos.z), new BlockPos(pos), false);
+          Vector3d pos = entity.position().add(0, entity.getEyeHeight(), 0).add(lookVec.scale(scale));
+          BlockPos bPos = new BlockPos(pos);
+          if (entity.level.getBlockState(bPos).getCollisionShape(entity.level, new BlockPos(pos)) != VoxelShapes.empty()
+               && !entity.level.getBlockState(bPos).isAir(entity.level, bPos)) {
+              return new BlockRayTraceResult(pos, Direction.getNearest(pos.x, pos.y, pos.z), bPos, false);
           } else {
-              Vec3d min = pos.add(0.25F, 0.25F, 0.25F);
-              Vec3d max = pos.add(-0.25F, -0.25F, -0.25F);
-              for (Entity e : entity.world.getEntitiesWithinAABBExcludingEntity(entity, new AxisAlignedBB(min.x, min.y, min.z, max.x, max.y, max.z))) {
+        	  Vector3d min = pos.add(0.25F, 0.25F, 0.25F);
+        	  Vector3d max = pos.add(-0.25F, -0.25F, -0.25F);
+              for (Entity e : entity.level.getEntities(entity, new AxisAlignedBB(min.x, min.y, min.z, max.x, max.y, max.z))) {
                   return new EntityRayTraceResult(e);
               }
           }
@@ -183,12 +191,12 @@ public class Helper {
     * @param type
     * @return
     */
-   public static String constructEntry(String timeStamp, Entity entity, LogType logType, String auditObjectName, DimensionType currentDimension, String posX, String posY, String posZ, WriteType type) {
+   public static String constructEntry(String timeStamp, Entity entity, LogType logType, String auditObjectName, RegistryKey<World> currentDimension, String posX, String posY, String posZ, WriteType type) {
 	   String logEntry = "";
 	   String delimiter = "";
 	   String entityName = entity.getDisplayName().getString();
-	   String dimName = currentDimension.getRegistryName().toString();
-	   String[] entries = new String[]{timeStamp, entityName, entity.getUniqueID().toString(), logType.name(), auditObjectName, dimName, posX, posY, posZ};
+	   String dimName = currentDimension.location().toString();
+	   String[] entries = new String[]{timeStamp, entityName, entity.getUUID().toString(), logType.name(), auditObjectName, dimName, posX, posY, posZ};
 	   switch(type) {
            case TXT:
               delimiter = " ";
@@ -219,12 +227,12 @@ public class Helper {
     * @param type
     * @return
     */
-   public static String constructEntry2(String timeStamp, Entity entity, LogType logType, String auditObject, String auditObject2, DimensionType currentDimension, String posX, String posY, String posZ, WriteType type) {
+   public static String constructEntry2(String timeStamp, Entity entity, LogType logType, String auditObject, String auditObject2, RegistryKey<World> currentDimension, String posX, String posY, String posZ, WriteType type) {
 	   String logEntry = "";
 	   String delimiter = "";
 	   String entityName = entity.getDisplayName().getString();
-	   String dimName = currentDimension == null ? "N_A" : currentDimension.getRegistryName().toString();
-	   String[] entries = new String[]{timeStamp, entityName, entity.getUniqueID().toString(), logType.name(), auditObject, auditObject2.isEmpty() ? "N_A" : auditObject2, dimName, posX, posY, posZ};
+	   String dimName = currentDimension == null ? "N_A" : currentDimension.location().toString();
+	   String[] entries = new String[]{timeStamp, entityName, entity.getUUID().toString(), logType.name(), auditObject, auditObject2.isEmpty() ? "N_A" : auditObject2, dimName, posX, posY, posZ};
 	   switch(type) {
            case TXT:
               delimiter = " ";

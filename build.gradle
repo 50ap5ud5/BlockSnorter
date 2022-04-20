@@ -1,33 +1,40 @@
 buildscript {
     repositories {
-        maven { url = 'https://files.minecraftforge.net/maven' }
+        maven { url = 'https://maven.minecraftforge.net' }
+        maven { url='https://repo.spongepowered.org/repository/maven-public' }
         jcenter()
         mavenCentral()
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.1+', changing: true
+        classpath group: 'org.spongepowered', name: 'mixingradle', version: '0.7-SNAPSHOT'
+        classpath "gradle.plugin.com.matthewprenger:CurseGradle:1.4.0"
     }
 }
 apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'org.spongepowered.mixin'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
+apply plugin: "com.matthewprenger.cursegradle"
 
 version = "${mod_version}"
-group = 'me.soapsuds' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+group = "${mod_base_package}"
 archivesBaseName = "${project.jar_name}-${minecraft_version}"
 
-sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
+java.toolchain.languageVersion = JavaLanguageVersion.of(8)
 
 minecraft {
-    mappings channel: 'stable', version: "${mappings_version}"
-    // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
-
+    mappings channel: "${mappings_channel}", version: "${mappings_version}"
+    
     runs {
         client {
             workingDirectory project.file('run')
-
+            arg "-mixin.config=block-snorter.mixins.json"
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${buildDir}/createSrgToMcp/output.srg"
+            property 'forge.logging.console.level', 'debug'
             mods {
-                block_snorter {
+                "${mod_id}" {
                     source sourceSets.main
                 }
             }
@@ -35,9 +42,11 @@ minecraft {
 
         server {
             workingDirectory project.file('run')
-
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${buildDir}/createSrgToMcp/output.srg"
+ 			property 'forge.logging.console.level', 'debug'
             mods {
-                block_snorter {
+                "${mod_id}" {
                     source sourceSets.main
                 }
             }
@@ -45,49 +54,78 @@ minecraft {
 
         data {
             workingDirectory project.file('run')
-
-            // Recommended logging data for a userdev environment
             property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
-
-            // Recommended logging level for the console
             property 'forge.logging.console.level', 'debug'
-
-            args '--mod', 'block_snorter', '--all', '--output', file('src/main/generated/')
-
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${buildDir}/createSrgToMcp/output.srg"
+            args '--mod', mod_id, '--all', '--output', file('src/main/generated/')
             mods {
-                block_snorter {
+                "${mod_id}" {
                     source sourceSets.main
                 }
             }
         }
     }
-    //accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+}
+
+mixin {
+    add sourceSets.main, "${mod_id}.refmap.json"
 }
 
 repositories{
-  mavenCentral()
-  maven { url 'https://jitpack.io' }
-  maven { url 'https://squiddev.cc/maven/' }
+  maven { url "https://www.cursemaven.com" } //Curse Maven
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${forge_version}"
-    //implementation fg.deobf("com.gitlab.Spectre0987:TardisMod-1-14:${tm_tag}") //Use stable version of Tardis Mod
-    //implementation fg.deobf('com.gitlab.Spectre0987:TardisMod-1-14:master-SNAPSHOT')//Test Mod to log modded objects
-    //implementation fg.deobf("org.squiddev:cc-tweaked-${minecraft_version}:${cct_version}") //Test Mod for testing custom mod containers
+    annotationProcessor "org.spongepowered:mixin:${mixin_version}:processor"
+    runtimeOnly fg.deobf("curse.maven:configured-457570:${configured_version}")
 }
 
-// Example for how to get properties into the manifest for reading by the runtime..
+//Reference: https://github.com/SizableShrimp/ForgeTemplate/blob/1.16.x/build.gradle#L158-L188
+def resourceTargets = ['META-INF/mods.toml', 'pack.mcmeta']
+def intoTargets = ["$rootDir/out/production/resources/", "$rootDir/out/production/${project.name}.main/", "$rootDir/bin/main/"]
+def replaceProperties = [mod_id: mod_id, mod_name: mod_name, mod_version: mod_version,
+                   mod_authors: mod_authors, credits:credits, mod_description: mod_description,
+                   display_url:display_url, logo_file:logo_file,
+                   issue_tracker_url: issue_tracker_url,
+                   update_json_url: update_json_url,
+                   license: license,
+                   forge_version_range: forge_version_range, minecraft_version_range: minecraft_version_range,
+                   loader_version_range: loader_version_range]
+processResources {
+    inputs.properties replaceProperties
+    replaceProperties.put 'project', project
+
+    filesMatching(resourceTargets) {
+        expand replaceProperties
+    }
+
+    intoTargets.each { target ->
+        if (file(target).exists()) {
+            copy {
+                from(sourceSets.main.resources) {
+                    include resourceTargets
+                    expand replaceProperties
+                }
+                into target
+            }
+        }
+    }
+}
+
 jar {
     manifest {
         attributes([
-            "Specification-Title": "block_snortermod",
-            "Specification-Vendor": "block_snorter_mod",
-            "Specification-Version": "1",
-            "Implementation-Title": project.name,
-            "Implementation-Version": "${version}",
-            "Implementation-Vendor" :"block_snorter_mod",
-            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                "Specification-Title"     : mod_id,
+                "Specification-Vendor"    : mod_authors,
+                "Specification-Version"   : "1.0.0",
+                "Implementation-Title"    : project.name,
+                "Implementation-Version"  : mod_version,
+                "Implementation-Vendor"   : mod_authors,
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                "MixinConfigs": "${mod_id}.mixins.json"
         ])
     }
 }

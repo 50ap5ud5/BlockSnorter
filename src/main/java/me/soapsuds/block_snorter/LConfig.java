@@ -49,7 +49,9 @@ public class LConfig {
 
     public ForgeConfigSpec.BooleanValue logBlockDimChange;
     public ForgeConfigSpec.BooleanValue filterDimDestinationTypes;
+    public ForgeConfigSpec.BooleanValue filterDimDestinations;
     public ForgeConfigSpec.ConfigValue<List<? extends String>> dimChangeDestinationTypes;
+    public ForgeConfigSpec.ConfigValue<List<? extends String>> dimChangeDestinations;
 
     public ForgeConfigSpec.BooleanValue logContainerUse;
     public ForgeConfigSpec.BooleanValue logContainerClose;
@@ -59,7 +61,7 @@ public class LConfig {
     public LConfig(ForgeConfigSpec.Builder builder) {
 
       builder.push("Log File Configurations");
-      logFolderDirectory = builder.translation("config.block_snorter.folder_path").comment("Defines folder path for where log files to be created in", "By default, generates in server root folder","'.' means root folder of your server install folder", "The path MUST NOT end in /").define("logFolderDirectory", "./block_snorter/block_logs", String.class::isInstance);
+      logFolderDirectory = builder.translation("config.block_snorter.folder_path").comment("Defines folder path for where log files to be created in", "By default, generates in the server root folder","'.' means root folder of your server install folder", "The path MUST NOT end in /").define("logFolderDirectory", "./block_snorter/block_logs", String.class::isInstance);
       fileName = builder.translation("config.block_snorter.file_name").comment("Defines file name for log files.", "A creation date timestamp will be appended to this name").define("fileName", "log", String.class::isInstance);
       fileExtensionType = builder.translation("config.block_snorter.file_ext_type").comment("Defines file extension type for log file", "Enter in one of the following: TXT or CSV","TXT = write to text file", "CSV = write to CSV file").define("fileExtensionType", "CSV", String.class::isInstance);
       dateTimeFormat = builder.translation("config.block_snorter.date_time_format").comment("Defines Date-Time Format for Timestamps used in log file name and entries").define("dateTimeFormat", "dd-MM-yyyy_HH-mm-ss", String.class::isInstance);
@@ -100,11 +102,17 @@ public class LConfig {
 
       builder.push("Dimension Audit");
       logBlockDimChange = builder.translation("config.block_snorter.dim_change").comment("Toggles whether to log players changing from one dimension to another").define("logBlockDimChange", true);
-      filterDimDestinationTypes = builder.translation("config.block_snorter.dim.filter").comment("Toggles filtering of dimension change logs by destination dimension type").define("filterDimDestinationTypes", false);
+      filterDimDestinations = builder.translation("config.block_snorter.dim.filter").comment("Toggles filtering of dimension change logs by destination dimension.").define("filterDimDestinations", false);
+      dimChangeDestinations = builder.translation("config.block_snorter.dimChangeDestinations")
+           .comment("List of dimensions to listen for when entity travels to this dimension type")
+           .defineList("dimChangeDestinations", Lists.newArrayList("minecraft:overworld","minecraft:the_nether","minecraft:the_end"), String.class::isInstance);
+      filterDimDestinationTypes = builder.translation("config.block_snorter.dim_type.filter").comment("Toggles filtering of dimension change logs by destination dimension type.", 
+    		  "A Dimension Type can be thought of as a group of dimensions. Multiple dimensions may belong to the same Dimension Type"
+    		  ,"Example: Dimension IDs of rftools:my_custom_dimension and rftools:my_other_dimension might share the same DimensionType ID of rftools:fixed_day").define("filterDimDestinationTypes", false);
       dimChangeDestinationTypes = builder.translation("config.block_snorter.dimChangeDestinationTypes")
-           .comment("List of dimensions to listen for when entity travels to this dimension")
-           .defineList("dimChangeDestinationTypes", Lists.newArrayList("minecraft:overworld","minecraft:the_nether","tardis"), String.class::isInstance);
-        builder.pop();
+           .comment("List of dimension types to listen for when entity travels to this dimension type")
+           .defineList("dimChangeDestinationTypes", Lists.newArrayList("rftoolsdim:fixed_day", "rftools:fixed_night", "hyperbox:hyperbox","tardis:tardis"), String.class::isInstance);
+      builder.pop();
 
       builder.push("Container Audit");
       logContainerUse = builder.translation("config.block_snorter.container.use").comment("Toggle whether to log container opening").define("logContainerUse", true);

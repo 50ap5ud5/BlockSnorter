@@ -1,5 +1,7 @@
 package me.soapsuds.block_snorter.events;
 
+import java.util.Optional;
+
 import me.soapsuds.block_snorter.BlockSnorter;
 import me.soapsuds.block_snorter.LConfig;
 import me.soapsuds.block_snorter.constants.Constants.LogType;
@@ -9,11 +11,14 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.world.DimensionType;
 import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -37,11 +42,11 @@ public class Events {
 			String z = Integer.toString(blockpos.getZ());
 			if (LConfig.CONFIG.filterBlockBreakTypes.get()) {
 				if (Helper.doesBlockBrokenMatchFilter(event.getState().getBlock())) {
-					Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getPlayer(), LogType.BLOCK_BREAK, block.getRegistryName().toString(), "", event.getPlayer().dimension, x, y, z, Writer.type));
+					Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getPlayer(), LogType.BLOCK_BREAK, block.getRegistryName().toString(), "", event.getPlayer().level.dimension(), x, y, z, Writer.type));
 				}
 			}
 			else {
-				Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getPlayer(), LogType.BLOCK_BREAK, block.getRegistryName().toString(), "", event.getPlayer().dimension, x, y, z, Writer.type));
+				Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getPlayer(), LogType.BLOCK_BREAK, block.getRegistryName().toString(), "", event.getPlayer().level.dimension(), x, y, z, Writer.type));
 			}
 		}
 	}
@@ -59,11 +64,11 @@ public class Events {
 				String z = Integer.toString(blockpos.getZ());
 				if (LConfig.CONFIG.filterBlockPlaceTypes.get()) {
 					if (Helper.doesBlockPlacedMatchFilter(event.getState().getBlock())) {
-						Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), player, LogType.BLOCK_PLACE, block.getRegistryName().toString(), "", event.getEntity().dimension, x, y, z, Writer.type));
+						Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), player, LogType.BLOCK_PLACE, block.getRegistryName().toString(), "", event.getEntity().level.dimension(), x, y, z, Writer.type));
 					}
 				}
 				else {
-					Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), player, LogType.BLOCK_PLACE, block.getRegistryName().toString(), "", event.getEntity().dimension, x, y, z, Writer.type));
+					Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), player, LogType.BLOCK_PLACE, block.getRegistryName().toString(), "", event.getEntity().level.dimension(), x, y, z, Writer.type));
 				}
 			}
 		}
@@ -82,16 +87,16 @@ public class Events {
 			String z = Integer.toString(blockpos.getZ());
 			if (LConfig.CONFIG.filterByBlockUseTypes.get()) {
 				if (Helper.doesBlockInteractedMatchFilter(event.getWorld().getBlockState(blockpos).getBlock())) {
-					Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.ITEM_RIGHT_CLICK, itemName, blockName, event.getEntity().dimension, x, y, z, Writer.type));
+					Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.ITEM_RIGHT_CLICK, itemName, blockName, event.getEntity().level.dimension(), x, y, z, Writer.type));
 				}
 			}
 			else if (LConfig.CONFIG.filterByItemUseTypes.get()) {
 				if (Helper.doesItemUsedMatchFilter(event.getItemStack().getItem())) {
-					Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.ITEM_RIGHT_CLICK, itemName, blockName, event.getEntity().dimension, x, y, z, Writer.type));
+					Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.ITEM_RIGHT_CLICK, itemName, blockName, event.getEntity().level.dimension(), x, y, z, Writer.type));
 				}
 			}
 			else {
-				Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.ITEM_RIGHT_CLICK, itemName, blockName, event.getEntity().dimension, x, y, z, Writer.type));
+				Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.ITEM_RIGHT_CLICK, itemName, blockName, event.getEntity().level.dimension(), x, y, z, Writer.type));
 			}
 		}
 	}
@@ -99,7 +104,7 @@ public class Events {
 	@SubscribeEvent
 	public static void logContainerOpen(PlayerContainerEvent.Open event) {
 		if (LConfig.CONFIG.logContainerUse.get()) {
-			if (!event.getEntity().getEntityWorld().isRemote() && event.getContainer() != null) {
+			if (!event.getEntity().level.isClientSide() && event.getContainer() != null) {
 				RayTraceResult rt = Helper.getRTLookingAt(event.getEntity(),10D);
 			    Entity ent = event.getEntity();
 			    String x = "";
@@ -108,17 +113,17 @@ public class Events {
 			    String tileOrEntityType = "";
 			    String directionOrName = "";
 				if (rt != null) {
-					Vec3d vec = rt.getHitVec();
-					x = Double.toString(vec.getX()); //Get hit vec values, use these as a fall back
-					y = Double.toString(vec.getY());
-					z = Double.toString(vec.getZ());
+					Vector3d vec = rt.getLocation();
+					x = Double.toString(vec.x()); //Get hit vec values, use these as a fall back
+					y = Double.toString(vec.y());
+					z = Double.toString(vec.z());
 					if (rt instanceof BlockRayTraceResult) {
 						BlockRayTraceResult brt = (BlockRayTraceResult)rt;
-						x = Integer.toString(brt.getPos().getX()); //Get exact block pos, for pretty printing
-						y = Integer.toString(brt.getPos().getY());
-						z = Integer.toString(brt.getPos().getZ());
-						directionOrName = event.getEntity().getHorizontalFacing().getOpposite().toString();
-						TileEntity tile = event.getEntity().world.getTileEntity(brt.getPos());
+						x = Integer.toString(brt.getBlockPos().getX()); //Get exact block pos, for pretty printing
+						y = Integer.toString(brt.getBlockPos().getY());
+						z = Integer.toString(brt.getBlockPos().getZ());
+						directionOrName = event.getEntity().getDirection().getOpposite().toString();
+						TileEntity tile = event.getEntity().level.getBlockEntity(brt.getBlockPos());
 						if (tile != null)
 						     tileOrEntityType = tile.getType().getRegistryName().toString(); //Get the actual tile entity name, because container types cannot be read easily
 						else if (tile == null && event.getContainer().getType() != null)//Handle when the block isn't a TE for some reason?
@@ -127,32 +132,32 @@ public class Events {
 					}
 					if (rt instanceof EntityRayTraceResult) {//Handle Entities that have a container
 						EntityRayTraceResult ert = (EntityRayTraceResult)rt;
-						x = Integer.toString(ert.getEntity().getPosition().getX()); //Get exact entity pos, for pretty printing
-						y = Integer.toString(ert.getEntity().getPosition().getY());
-						z = Integer.toString(ert.getEntity().getPosition().getZ());
+						x = Integer.toString(ert.getEntity().blockPosition().getX()); //Get exact entity pos, for pretty printing
+						y = Integer.toString(ert.getEntity().blockPosition().getY());
+						z = Integer.toString(ert.getEntity().blockPosition().getZ());
 						if (ert.getEntity().getType() != null && event.getContainer().getType() != null) {
 						    tileOrEntityType = ert.getEntity().getType().getRegistryName().toString();
 						    directionOrName = ert.getEntity().getDisplayName().getString(); //Get entity name to handle cases where players have named their entity containers
 						}
 						else {
-						    tileOrEntityType = event.getEntity().getEntityString(); //Handle cases where entity type is null
+						    tileOrEntityType = event.getEntity().getEncodeId(); //Handle cases where entity type is null
 						}
 					}
 					if (LConfig.CONFIG.filterContainerTypes.get()) {
 					    if (Helper.doesContainerTypeMatchFilter(event.getContainer().getType())) {
-						    Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.CONTAINER_OPEN, tileOrEntityType, directionOrName, event.getEntity().dimension, x, y, z, Writer.type));
+						    Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.CONTAINER_OPEN, tileOrEntityType, directionOrName, event.getEntity().level.dimension(), x, y, z, Writer.type));
 					    }
 				    }
 				    else {
-				        Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.CONTAINER_OPEN, tileOrEntityType, directionOrName, event.getEntity().dimension, x, y, z, Writer.type));
+				        Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.CONTAINER_OPEN, tileOrEntityType, directionOrName, event.getEntity().level.dimension(), x, y, z, Writer.type));
 				    }
 				}
 			    else {
-			        x = Integer.toString(ent.getPosition().getX());
-			        y = Integer.toString(ent.getPosition().getY());
-			        z = Integer.toString(ent.getPosition().getZ());
-			    	directionOrName = ent.getHorizontalFacing().getOpposite().getName();
-			        Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.CONTAINER_OPEN, tileOrEntityType, directionOrName, event.getEntity().dimension, x, y, z, Writer.type));
+			        x = Integer.toString(ent.blockPosition().getX());
+			        y = Integer.toString(ent.blockPosition().getY());
+			        z = Integer.toString(ent.blockPosition().getZ());
+			    	directionOrName = ent.getDirection().getOpposite().getName();
+			        Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.CONTAINER_OPEN, tileOrEntityType, directionOrName, event.getEntity().level.dimension(), x, y, z, Writer.type));
 			    }
 		    }
 		}
@@ -161,7 +166,7 @@ public class Events {
 	@SubscribeEvent
 	public static void logContainerClose(PlayerContainerEvent.Close event) {
 		if (LConfig.CONFIG.logContainerUse.get() && LConfig.CONFIG.logContainerClose.get()) {
-			if (!event.getEntity().getEntityWorld().isRemote() && event.getContainer() != null) {
+			if (!event.getEntity().level.isClientSide() && event.getContainer() != null) {
 				Entity ent = event.getEntity();
 			    String x = "";
 			    String y = "";
@@ -170,17 +175,17 @@ public class Events {
 			    String directionOrName = "";
 				RayTraceResult rt = Helper.getRTLookingAt(event.getEntity(),10D);
 				if (rt != null) {
-					Vec3d vec = rt.getHitVec();
-					x = Double.toString(vec.getX()); //Get hit vec values, use these as a fall back
-				    y = Double.toString(vec.getY());
-					z = Double.toString(vec.getZ());
+					Vector3d vec = rt.getLocation();
+					x = Double.toString(vec.x()); //Get hit vec values, use these as a fall back
+				    y = Double.toString(vec.y());
+					z = Double.toString(vec.z());
 					if (rt instanceof BlockRayTraceResult) {
 						BlockRayTraceResult brt = (BlockRayTraceResult)rt;
-						x = Integer.toString(brt.getPos().getX()); //Get exact block pos, for pretty printing
-						y = Integer.toString(brt.getPos().getY());
-						z = Integer.toString(brt.getPos().getZ());
-						directionOrName = event.getEntity().getHorizontalFacing().getOpposite().toString();
-						TileEntity tile = event.getEntity().world.getTileEntity(brt.getPos());
+						x = Integer.toString(brt.getBlockPos().getX()); //Get exact block pos, for pretty printing
+						y = Integer.toString(brt.getBlockPos().getY());
+						z = Integer.toString(brt.getBlockPos().getZ());
+						directionOrName = event.getEntity().getDirection().getOpposite().toString();
+						TileEntity tile = event.getEntity().level.getBlockEntity(brt.getBlockPos());
 						if (tile != null)
 						     tileOrEntityType = tile.getType().getRegistryName().toString(); //Get the actual tile entity name, because container types cannot be read easily
 						else if (tile == null && event.getContainer().getType() != null)//Handle when the block isn't a TE for some reason?
@@ -189,32 +194,32 @@ public class Events {
 					}
 					if (rt instanceof EntityRayTraceResult) {//Handle Entities that have a container
 						EntityRayTraceResult ert = (EntityRayTraceResult)rt;
-						x = Integer.toString(ert.getEntity().getPosition().getX()); //Get exact entity pos, for pretty printing
-						y = Integer.toString(ert.getEntity().getPosition().getY());
-						z = Integer.toString(ert.getEntity().getPosition().getZ());
+						x = Integer.toString(ert.getEntity().blockPosition().getX()); //Get exact entity pos, for pretty printing
+						y = Integer.toString(ert.getEntity().blockPosition().getY());
+						z = Integer.toString(ert.getEntity().blockPosition().getZ());
 						if (ert.getEntity().getType() != null && event.getContainer().getType() != null) {
 						    tileOrEntityType = ert.getEntity().getType().getRegistryName().toString();
 						    directionOrName = ert.getEntity().getDisplayName().getString(); //Get entity name to handle cases where players have named their entity containers
 						}
 						else {
-						    tileOrEntityType = event.getEntity().getEntityString(); //Handle cases where entity type is null
+						    tileOrEntityType = event.getEntity().getEncodeId(); //Handle cases where entity type is null
 						}
 					}
 				    if (LConfig.CONFIG.filterContainerTypes.get()) {
 					    if (Helper.doesContainerTypeMatchFilter(event.getContainer().getType())) {
-						    Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.CONTAINER_CLOSE, tileOrEntityType, directionOrName, event.getEntity().dimension, x, y, z, Writer.type));
+						    Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.CONTAINER_CLOSE, tileOrEntityType, directionOrName, event.getEntity().level.dimension(), x, y, z, Writer.type));
 					    }
 				    }
 				    else {
-				        Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.CONTAINER_CLOSE, tileOrEntityType, directionOrName, event.getEntity().dimension, x, y, z, Writer.type));
+				        Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.CONTAINER_CLOSE, tileOrEntityType, directionOrName, event.getEntity().level.dimension(), x, y, z, Writer.type));
 				    }
 				}
 			    else {
-			    	x = Integer.toString(ent.getPosition().getX());
-			    	y = Integer.toString(ent.getPosition().getY());
-			    	z = Integer.toString(ent.getPosition().getZ());
-			    	directionOrName = ent.getHorizontalFacing().getOpposite().getName();
-			    	Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.CONTAINER_CLOSE, tileOrEntityType, directionOrName, ent.dimension, x, y, z, Writer.type));
+			    	x = Integer.toString(ent.blockPosition().getX());
+			    	y = Integer.toString(ent.blockPosition().getY());
+			    	z = Integer.toString(ent.blockPosition().getZ());
+			    	directionOrName = ent.getDirection().getOpposite().getName();
+			    	Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), event.getEntity(), LogType.CONTAINER_CLOSE, tileOrEntityType, directionOrName, ent.level.dimension(), x, y, z, Writer.type));
 			    }
 		    }
 		}
@@ -224,17 +229,23 @@ public class Events {
 	public static void logPlayerDimensionChange(PlayerEvent.PlayerChangedDimensionEvent event) {
 		if(event.getEntity() instanceof ServerPlayerEntity) {
 			ServerPlayerEntity player = (ServerPlayerEntity)event.getPlayer();
-			BlockPos pos = player.getPosition(); //log player position at place of dim change
+			BlockPos pos = player.blockPosition(); //log player position at place of dim change
 			String x = Integer.toString(pos.getX());
 			String y = Integer.toString(pos.getY());
 			String z = Integer.toString(pos.getZ());
-			if (LConfig.CONFIG.filterDimDestinationTypes.get()) {
+			if (LConfig.CONFIG.filterDimDestinations.get()) {
 				if (Helper.doesDimensionDestinationMatchFilter(event.getTo())) {
-					Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), player, LogType.DIM_CHANGE, event.getFrom().getRegistryName().toString(), event.getTo().getRegistryName().toString(), null, x, y, z, Writer.type));
+					Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), player, LogType.DIM_CHANGE, event.getFrom().location().toString(), event.getTo().location().toString(), null, x, y, z, Writer.type));
 				}
 			}
-			else {
-				Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), player, LogType.DIM_CHANGE, event.getFrom().getRegistryName().toString(), event.getTo().getRegistryName().toString(), null, x, y, z, Writer.type));
+			if (LConfig.CONFIG.filterDimDestinationTypes.get()) {
+				DimensionType typeToWorld = player.getServer().getLevel(event.getTo()).dimensionType();
+				Optional<RegistryKey<DimensionType>> typeKey = player.getServer().registryAccess().registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY).getResourceKey(typeToWorld);
+				if (typeKey.isPresent()) {
+					if (Helper.doesDimensionDestinationTypeMatchFilter(typeKey.get())) {
+						Writer.writeToLog(Helper.constructEntry2(Helper.timeStampAtTimeZone(), player, LogType.DIM_CHANGE, event.getFrom().location().toString(), event.getTo().location().toString(), null, x, y, z, Writer.type));
+					}
+				}
 			}
 		}
 	}

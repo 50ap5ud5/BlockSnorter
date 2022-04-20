@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "me.soapsuds.block_snorter.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "block_snorter.refmap.json",
+  "mixins": [
+
+  ],
+  "client": [
+  ],
+  "minVersion": "0.8"
+}

@@ -31,7 +31,7 @@ public class Writer {
    public static void onServerStart(FMLServerStartingEvent event) {
 	  genLogFile();
       try {
-		parent = event.getServer().getDataDirectory().getCanonicalPath();
+		parent = event.getServer().getServerDirectory().getCanonicalPath();
 	  } catch (IOException e1) {
 		e1.printStackTrace();
 	  }

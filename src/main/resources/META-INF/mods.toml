@@ -1,15 +1,26 @@
-modLoader="javafml" #mandatory
-loaderVersion="[28,)" #mandatory (28 is current forge version)
-issueTrackerURL="http://my.issue.tracker/" #optional
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+issueTrackerURL = "${issue_tracker_url}"
+license = "${license}"
+[[mods]]
+modId = "${mod_id}"
+version = "${mod_version}"
+displayName = "${mod_name}"
+displayURL = "${display_url}"
+logoFile="${logo_file}"
+credits="${credits}"
+authors = "${mod_authors}"
+description = '''${mod_description}'''
 
-[[mods]] #mandatory
-modId="block_snorter" #mandatory
-version="${file.jarVersion}" #mandatory
-displayName="Block Snorter" #mandatory
-#updateJSONURL="http://myurl.me/" #optional
-#displayURL="http://example.com/" #optional
-logoFile="examplemod.png" #optional
-credits="Spectre0987"
-authors="50ap5ud5" #optional
-description='''
-Server Administration Audit Tool.'''
+[[dependencies.${mod_id}]]
+modId = "forge"
+mandatory = true
+versionRange = "${forge_version_range}"
+ordering = "BEFORE"
+side = "BOTH"
+[[dependencies.${mod_id}]]
+modId = "minecraft"
+mandatory = true
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
