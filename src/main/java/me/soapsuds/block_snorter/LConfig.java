@@ -116,7 +116,7 @@ public class LConfig {
 
       builder.push("Container Audit");
       logContainerUse = builder.translation("config.block_snorter.container.use").comment("Toggle whether to log container opening").define("logContainerUse", true);
-      logContainerClose = builder.translation("config.block_snorter.container.close").comment("Toggle whether to log container closing").define("logContainerClose", false);
+      logContainerClose = builder.translation("config.block_snorter.container.close").comment("Toggle whether to log container closing", "Requires logContainerUse to be set to true").define("logContainerClose", false);
       filterContainerTypes = builder.translation("config.block_snorter.container.filter").comment("Toggles filtering of container use logging by container type").define("filterContainerTypes", false);
       containerTypes = builder.translation("config.block_snorter.containerTypes")
            .comment("List of container types that the audit should track when they are opened","These are NOT the namespace id of blocks")
@@ -129,11 +129,20 @@ public class LConfig {
                 "minecraft:anvil",
                 "minecraft:beacon",
                 "minecraft:blast_furnace",
-                "minecraft:furnace",
-                "minecraft:hopper",
                 "minecraft:brewing_stand",
+                "minecraft:crafting",
+                "minecraft:enchantment",
+                "minecraft:furnace",
+                "minecraft:grindstone",
+                "minecraft:hopper",
+                "minecraft:lectern",
+                "minecraft:loom",
+                "minecraft:merchant",
                 "minecraft:shulker_box",
-                "minecraft:smoker"), String.class::isInstance);
+                "minecraft:smithing",
+                "minecraft:smoker",
+                "minecraft:cartography_table",
+                "minecraft:stonecutter"), String.class::isInstance);
       builder.pop();
     }
 }
